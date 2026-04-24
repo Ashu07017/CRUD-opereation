@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ── CSS Variables ── */
+    :root {
+      --bg:        #0d0f14;
+      --surface:   #161923;
+      --border:    #252c3b;
+      --accent:    #5cefb0;
+      --accent2:   #3dd9f5;
+      --danger:    #ff5f7e;
+      --warning:   #f5c842;
+      --text:      #e8ecf4;
+      --muted:     #7a8499;
+      --radius:    10px;
+      --mono:      'DM Mono', monospace;
+      --sans:      'Syne', sans-serif;
+      --shadow:    0 8px 32px rgba(0,0,0,0.45);
+    }
+
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 40px 20px 80px;
+      background-image:
+        radial-gradient(ellipse 60% 40% at 80% 10%, rgba(92,239,176,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 35% at 10% 90%, rgba(61,217,245,0.06) 0%, transparent 60%);
+    }
+
+    /* ── Page Header ── */
+    .page-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .page-header h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+    }
+    .page-header p {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      margin-top: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: var(--shadow);
+      margin-bottom: 32px;
+    }
+    .card-title {
+      font-size: 0.72rem;
+      font-family: var(--mono);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Form ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 640px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    .field label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 7px;
+      letter-spacing: 0.06em;
+    }
+    .field input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.88rem;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(92,239,176,0.12);
+    }
+    .field input::placeholder { color: #3a4155; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--sans);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 10px 22px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0d0f14;
+    }
+    .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { color: var(--text); border-color: var(--muted); }
+
+    .btn-edit {
+      background: rgba(61,217,245,0.12);
+      color: var(--accent2);
+      border: 1px solid rgba(61,217,245,0.25);
+      font-size: 0.78rem;
+      padding: 6px 14px;
+    }
+    .btn-edit:hover { background: rgba(61,217,245,0.22); }
+
+    .btn-delete {
+      background: rgba(255,95,126,0.12);
+      color: var(--danger);
+      border: 1px solid rgba(255,95,126,0.25);
+      font-size: 0.78rem;
+      padding: 6px 14px;
+    }
+    .btn-delete:hover { background: rgba(255,95,126,0.22); }
+
+    .form-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* ── Edit mode indicator ── */
+    #editBanner {
+      display: none;
+      background: rgba(245,200,66,0.1);
+      border: 1px solid rgba(245,200,66,0.3);
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--warning);
+      margin-bottom: 16px;
+    }
+    #editBanner.visible { display: flex; align-items: center; gap: 8px; }
+
+    /* ── Toast notifications ── */
+    #toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 20px;
+      font-size: 0.85rem;
+      font-family: var(--mono);
+      box-shadow: var(--shadow);
+      animation: slideIn 0.25s ease, fadeOut 0.3s ease 2.7s forwards;
+      min-width: 260px;
+      max-width: 360px;
+    }
+    .toast.success { border-left: 3px solid var(--accent); }
+    .toast.error   { border-left: 3px solid var(--danger); }
+    .toast .icon { font-size: 1rem; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(30px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fadeOut {
+      to { opacity: 0; transform: translateX(30px); }
+    }
+
+    /* ── Table ── */
+    .table-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .student-count {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .student-count span {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead th {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr {
+      transition: background 0.15s;
+    }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+    tbody td {
+      padding: 14px 16px;
+      font-size: 0.88rem;
+      border-bottom: 1px solid rgba(37,44,59,0.5);
+      vertical-align: middle;
+    }
+    .td-id {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .td-name { font-weight: 600; }
+    .td-email {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .td-course {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(92,239,176,0.08);
+      color: var(--accent);
+      border: 1px solid rgba(92,239,176,0.2);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-family: var(--mono);
+      padding: 3px 12px;
+    }
+    .td-actions { display: flex; gap: 8px; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 0;
+      color: var(--muted);
+    }
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-state p { font-family: var(--mono); font-size: 0.82rem; }
+
+    /* ── Loading spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <div class="container">
+
+    <!-- Header -->
+    <div class="page-header">
+      <h1>Student Manager</h1>
+      <p>http://localhost:5000/api/students</p>
+    </div>
+
+    <!-- Form Card -->
+    <div class="card">
+      <div class="card-title">Student Form</div>
+
+      <!-- Edit mode banner -->
+      <div id="editBanner">
+        <span>✏️</span>
+        <span>Editing student — <strong id="editingName"></strong>. Fill in the fields below and click Update.</span>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" placeholder="e.g. Priya Sharma" />
+        </div>
+        <div class="field">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" placeholder="e.g. priya@uni.edu" />
+        </div>
+        <div class="field">
+          <label for="course">Course</label>
+          <input type="text" id="course" placeholder="e.g. Computer Science" />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" id="submitBtn" onclick="handleSubmit()">
+          ➕ Add Student
+        </button>
+        <button class="btn btn-secondary" id="cancelBtn" onclick="cancelEdit()" style="display:none;">
+          ✕ Cancel
+        </button>
+      </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card">
+      <div class="table-header-row">
+        <div class="card-title" style="margin-bottom:0; flex:1;">All Students</div>
+        <div class="student-count">Total: <span id="studentCount">0</span></div>
+        <button class="btn btn-secondary" onclick="fetchStudents()" style="font-size:0.8rem; padding:7px 16px;">
+          ↻ Refresh
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <table id="studentTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Course</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="studentBody">
+            <!-- Rows injected here -->
+          </tbody>
+        </table>
+        <div class="empty-state" id="emptyState" style="display:none;">
+          <div class="empty-icon">🎓</div>
+          <p>No students yet. Add one above!</p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+
+
+  <script>
+    // ── Config ──────────────────────────────────────────────────
+    const API = 'http://localhost:5000/api/students';
+
+    // ── State ────────────────────────────────────────────────────
+    let editingId = null;   // null = create mode, string/number = edit mode
+
+    // ── On page load ─────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', fetchStudents);
+
+    // ════════════════════════════════════════════════════════════
+    //  READ — fetch all students and render table
+    // ════════════════════════════════════════════════════════════
+    async function fetchStudents() {
+      const tbody = document.getElementById('studentBody');
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;">
+        <span class="spinner"></span></td></tr>`;
+
+      try {
+        const res  = await fetch(API);
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        const data = await res.json();
+        renderTable(data);
+      } catch (err) {
+        showToast('Could not load students: ' + err.message, 'error');
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger);
+          font-family:var(--mono);font-size:0.82rem;padding:24px;">
+          ⚠ Failed to connect to API</td></tr>`;
+      }
+    }
+
+    function renderTable(students) {
+      const tbody  = document.getElementById('studentBody');
+      const empty  = document.getElementById('emptyState');
+      const count  = document.getElementById('studentCount');
+
+      count.textContent = students.length;
+
+      if (students.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+
+      tbody.innerHTML = students.map((s, i) => `
+        <tr>
+          <td class="td-id">${i + 1}</td>
+          <td class="td-name">${escHtml(s.name)}</td>
+          <td class="td-email">${escHtml(s.email)}</td>
+          <td><span class="td-course">${escHtml(s.course)}</span></td>
+          <td class="td-actions">
+            <button class="btn btn-edit"
+              onclick="startEdit(${JSON.stringify(s).replace(/"/g, '&quot;')})">
+              ✏ Edit
+            </button>
+            <button class="btn btn-delete" onclick="deleteStudent('${s._id || s.id}')">
+              🗑 Delete
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // ════════════════════════════════════════════════════════════
+    //  CREATE / UPDATE — form submit handler
+    // ════════════════════════════════════════════════════════════
+    async function handleSubmit() {
+      // Gather values
+      const name   = document.getElementById('name').value.trim();
+      const email  = document.getElementById('email').value.trim();
+      const course = document.getElementById('course').value.trim();
+
+      // Basic validation
+      if (!name || !email || !course) {
+        showToast('Please fill in all three fields.', 'error');
+        return;
+      }
+
+      const payload = { name, email, course };
+      const isEdit  = editingId !== null;
+
+      try {
+        const res = await fetch(
+          isEdit ? `${API}/${editingId}` : API,
+          {
+            method:  isEdit ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload)
+          }
+        );
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || `Server error ${res.status}`);
+        }
+
+        showToast(
+          isEdit ? `✅ Student "${name}" updated!` : `✅ Student "${name}" added!`,
+          'success'
+        );
+        cancelEdit();      // reset form
+        fetchStudents();   // refresh table
+
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    }
+
+    // ════════════════════════════════════════════════════════════
+    //  UPDATE — prefill form for editing
+    // ════════════════════════════════════════════════════════════
+    function startEdit(student) {
+      editingId = student._id || student.id;
+
+      document.getElementById('name').value   = student.name;
+      document.getElementById('email').value  = student.email;
+      document.getElementById('course').value = student.course;
+
+      // Update UI to "edit mode"
+      document.getElementById('submitBtn').textContent = '💾 Update Student';
+      document.getElementById('cancelBtn').style.display = 'inline-flex';
+
+      const banner = document.getElementById('editBanner');
+      document.getElementById('editingName').textContent = student.name;
+      banner.classList.add('visible');
+
+      // Scroll to form
+      document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function cancelEdit() {
+      editingId = null;
+      document.getElementById('name').value   = '';
+      document.getElementById('email').value  = '';
+      document.getElementById('course').value = '';
+
+      document.getElementById('submitBtn').textContent = '➕ Add Student';
+      document.getElementById('cancelBtn').style.display = 'none';
+      document.getElementById('editBanner').classList.remove('visible');
+    }
+
+    // ════════════════════════════════════════════════════════════
+    //  DELETE — remove a student by id
+    // ════════════════════════════════════════════════════════════
+    async function deleteStudent(id) {
+      if (!confirm('Delete this student? This cannot be undone.')) return;
+
+      try {
+        const res = await fetch(`${API}/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error(`Server error ${res.status}`);
+
+        showToast('🗑 Student deleted.', 'success');
+        if (editingId === id) cancelEdit();   // clear form if we were editing this student
+        fetchStudents();
+
+      } catch (err) {
+        showToast('Delete failed: ' + err.message, 'error');
+      }
+    }
+
+    // ════════════════════════════════════════════════════════════
+    //  HELPERS
+    // ════════════════════════════════════════════════════════════
+
+    // Show a floating toast notification
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `
+        <span class="icon">${type === 'success' ? '✔' : '✖'}</span>
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+      // Auto-remove after animation ends (3s total)
+      setTimeout(() => toast.remove(), 3100);
+    }
+
+    // Escape HTML to prevent XSS when injecting user data into the DOM
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  </script>
+
+</body>
+</html>
